@@ -1,0 +1,10 @@
+
+
+git add <file>
+git commit <file>
+git push
+
+
+git pull origin master
+
+
