@@ -7,6 +7,7 @@ Created on Sat Apr  1 11:06:29 2017
 
 # top score 12.384.075.106 (1.2 * 10^10)
 # random result factor 38
+# going south 26.6 Mrd
 # 
 TOP = 12384075106.1875
 
@@ -126,6 +127,7 @@ giftsLeft = range(1,100001)
 
 total = 0.0
 round = 0
+pathes = {}
 
 while len(giftsLeft) > 0:
     # create path
@@ -157,6 +159,7 @@ while len(giftsLeft) > 0:
     plotPath (round,path)            
     
     act = wrw(path)
+    pathes[round] = path
     total += act
     wrwMeanAct = int(act / len(path))
     pathTime = int((time.time() - pathTime0) / .6) / 100
@@ -174,10 +177,18 @@ while len(giftsLeft) > 0:
 
 percent = total / TOP
 print ('Result: ' + str(total))
-print ('Result: ' + str(int(percent)))
+print ('Result: ' + str(int(percent*100)/100))
 
 
 
 
 # ---------------------
+
+name = '/home/gs/DataScientist/santa/submission.csv'
+file = open (name, 'w')
+file.write ('GiftId,TripId\n')
+for p in pathes:
+    for e in pathes[p]:
+        file.write('{},{}\n'.format(e,p))
+file.close() 
 
