@@ -12,13 +12,17 @@ TOP = 12384075106.1875
 
 import pandas as pd
 import time
+import matplotlib.pyplot as plt
 
 from haversine import haversine
 from random import randint
 
 MAX_WEIGHT = 1000
 EMPTY_WEIGHT = 1000
-NORTH_POLE = (0,0)
+NORTH_POLE = (90,0)
+LAT_CUTOFF = 80
+LON_RANGE = 2.0
+LAT_RANGE = 3.0
 
 print ('Read gifts file...')
 gifts = pd.read_csv('~/DataScientist/santa/gifts.csv')
@@ -84,7 +88,36 @@ def closestGift (pos, giftsLeft):
             closest = g
             minDist = d 
     return closest
-            
+
+
+def goingSouth (pos, giftsLeft):
+    # find gifts south of pos and close in longitude
+    res = []
+    for g in giftsLeft:
+        if giftLat[g] < pos[0]:
+            if ( 
+                ( ( abs(giftLon[g] - pos[1]) < LON_RANGE) and 
+                  ( abs(giftLat[g] - pos[0]) < LAT_RANGE) )
+                or ( (abs(giftLat[g]) > LAT_CUTOFF) and (pos[0] <= 0))):
+                res.append(g)
+    #print ('{} going south returned elements: {}'.format(pos, len(res)))
+    return res
+
+
+def plotPath (number, path):
+    pX = [ giftLon[g] for g in giftsLeft ]    
+    pY = [ giftLat[g] for g in giftsLeft ]    
+    plt.plot(pX, pY, 'ro', markersize=0.05)
+    #plt.plot(gifts['Longitude'], gifts['Latitude'], 'ro', markersize=0.05)
+    plt.axis([-180, 180, -90, 90])
+    cX = [giftLon[g] for g in path]
+    cY = [giftLat[g] for g in path]
+    plt.plot(cX, cY, 'b-', linewidth=0.5)
+    name = '/home/gs/DataScientist/santa/plots/path' + str(number) + '.png'
+    plt.savefig(name, dpi=300)
+    plt.close()
+    return 1
+
 # ---------------------------------------------    
 
 time0 = time.time()
@@ -103,8 +136,12 @@ while len(giftsLeft) > 0:
     pos = NORTH_POLE
     loading = True
     while loading == True:
-        #element = giftsLeft[0]
-        element = closestGift(pos, giftsLeft)
+        giftsSouth = goingSouth(pos, giftsLeft)
+        if len(giftsSouth) > 0:
+            element = closestGift(pos, giftsSouth)
+        else:
+            element = closestGift(pos, giftsLeft)
+
         if giftWeight[ element ] + weight <= MAX_WEIGHT:
             path.append(element)
             weight += giftWeight[ element ]
@@ -117,22 +154,30 @@ while len(giftsLeft) > 0:
             # full
     # calc path
     # add to total
+    plotPath (round,path)            
+    
     act = wrw(path)
     total += act
     wrwMeanAct = int(act / len(path))
-    pathTime = time.time() - pathTime0    
+    pathTime = int((time.time() - pathTime0) / .6) / 100
+    est = int(total / (100000 - len(giftsLeft)) * 100000 / 1000000000)
     
-    print ('round  :   {}'.format(round))
-    print ('time   :   {}'.format(pathTime))
-    print ('# gifts:   {}'.format(len(path)))
-    print ('weight:    {}'.format(int(weight)))
-    print ('giftsLeft: {}'.format(len(giftsLeft)))
+    print ('round  :      {}'.format(round))
+    print ('time   :      {} min'.format(pathTime))
+    print ('# gifts:      {}'.format(len(path)))
+    print ('path:         {}'.format(path))
+    print ('weight:       {}'.format(int(weight)))
+    print ('giftsLeft:    {}'.format(len(giftsLeft)))
     print ('actMeanWRW:   {}'.format(wrwMeanAct))
-    print ('totalWRW:     {}'.format(long(total)))
+    print ('totalWRW:     {} est in Mrd {}'.format(long(total), est))
     print ('\n')
 
 percent = total / TOP
 print ('Result: ' + str(total))
 print ('Result: ' + str(int(percent)))
 
+
+
+
+# ---------------------
 
