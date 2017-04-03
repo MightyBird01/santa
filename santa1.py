@@ -5,13 +5,16 @@ Created on Sat Apr  1 11:06:29 2017
 @author: gs
 """
 
-# top score 12384075106.1875
-
-
+# top score 12.384.075.106 (1.2 * 10^10)
+# random result factor 38
+# 
+TOP = 12384075106.1875
 
 import pandas as pd
+import time
 
 from haversine import haversine
+from random import randint
 
 MAX_WEIGHT = 1000
 EMPTY_WEIGHT = 1000
@@ -53,15 +56,14 @@ print ('Min Lon: ' + str(min(gifts['Longitude'])))
 # calc path length*weights
 
 def wrw (tripGifts):
+    # weighted reindeer weariness
     wrw = 0.0
     actualWeight = 10
-    actualPos = (0,0)
-    # weighted reindeer weariness
-    # get path
+    actualPos = NORTH_POLE
     # calc starting weight
     for g in tripGifts:
         actualWeight += giftWeight[g]
-    print ('initialWeight: {}'.format(actualWeight))
+    #print ('initialWeight: {}'.format(actualWeight))
     # follow path, add wrw, remove weight
     for g in tripGifts:
         newPos = (giftLat[g], giftLon[g])
@@ -73,15 +75,64 @@ def wrw (tripGifts):
 
     return wrw
     
-    
+def closestGift (pos, giftsLeft):
+    closest = 0
+    minDist = 999999.9
+    for g in giftsLeft:
+        d = haversine( pos, (giftLat[g], giftLon[g]) )
+        if d < minDist:
+            closest = g
+            minDist = d 
+    return closest
+            
+# ---------------------------------------------    
+
+time0 = time.time()
 
 giftsLeft = range(1,100001)
 
+total = 0.0
+round = 0
 
-print (wrw([1]))
-print (wrw([2]))
-print (wrw([1,2]))
-print (wrw([2,1]))
+while len(giftsLeft) > 0:
+    # create path
+    pathTime0 = time.time() 
+    round += 1
+    path = []
+    weight = 0
+    pos = NORTH_POLE
+    loading = True
+    while loading == True:
+        #element = giftsLeft[0]
+        element = closestGift(pos, giftsLeft)
+        if giftWeight[ element ] + weight <= MAX_WEIGHT:
+            path.append(element)
+            weight += giftWeight[ element ]
+            pos = (giftLat[ element ], giftLon[ element ])
+            giftsLeft.remove(element)
+            if len(giftsLeft) == 0:
+                loading = False
+        else:
+            loading = False
+            # full
+    # calc path
+    # add to total
+    act = wrw(path)
+    total += act
+    wrwMeanAct = int(act / len(path))
+    pathTime = time.time() - pathTime0    
+    
+    print ('round  :   {}'.format(round))
+    print ('time   :   {}'.format(pathTime))
+    print ('# gifts:   {}'.format(len(path)))
+    print ('weight:    {}'.format(int(weight)))
+    print ('giftsLeft: {}'.format(len(giftsLeft)))
+    print ('actMeanWRW:   {}'.format(wrwMeanAct))
+    print ('totalWRW:     {}'.format(long(total)))
+    print ('\n')
 
+percent = total / TOP
+print ('Result: ' + str(total))
+print ('Result: ' + str(int(percent)))
 
 
