@@ -7,14 +7,15 @@ Created on Sat Apr  1 11:06:29 2017
 
 # top score 12.384.075.106 (1.2 * 10^10)
 # random result factor 38...
-# going south 13.3 Mrd (794/1127 = 70%)
-# using closest allways  : 
-# using closest weighted 0.1 : 
-# using closest weighted 1.0 : 
-# using closest weighted 3   : 
-# using closest weighted 5   : 
-# using closest weighted 10  : 
-# using closest weighted 20  : 
+# going south            :      13.3 Mrd (794/1127 = 70%)
+# using closest allways  :      13.46
+# using closest weighted 0.1  : 
+# using closest weighted 1.0  : 
+# using closest weighted 3    : 
+# using closest weighted 5    : 
+# using closest weighted 10   : 
+# using closest weighted 20   :>15.xx 
+# using closest linear weight :
 
 TOP = 12384075106.1875
 
