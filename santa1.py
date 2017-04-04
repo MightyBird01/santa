@@ -7,7 +7,7 @@ Created on Sat Apr  1 11:06:29 2017
 
 # top score 12.384.075.106 (1.2 * 10^10)
 # random result factor 38...
-# going south 13.3 Mrd
+# going south 13.3 Mrd (794/1127 = 70%)
 # using closest allways  : 
 # using closest weighted 0.1 : 
 # using closest weighted 1.0 : 
@@ -125,8 +125,7 @@ def closestGiftWeighted (pos, giftsLeft, pathLen):
     # return closest gift weighted as id
     closest = 0
     minDist = 9999999.9
-    if pathLen == 0:
-        pathLen = 1
+    pathLen += 10 # do not overrate
     for g in giftsLeft:
         d = haversine( pos, (giftLat[g], giftLon[g]) ) / ((giftWeight[g] / WEIGHT_FACTOR) / pathLen)
         if d < minDist:
