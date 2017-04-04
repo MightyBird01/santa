@@ -6,9 +6,16 @@ Created on Sat Apr  1 11:06:29 2017
 """
 
 # top score 12.384.075.106 (1.2 * 10^10)
-# random result factor 38
-# going south 26.6 Mrd
-# 
+# random result factor 38...
+# going south 13.3 Mrd
+# using closest allways  : 
+# using closest weighted 0.1 : 
+# using closest weighted 1.0 : 
+# using closest weighted 3   : 
+# using closest weighted 5   : 
+# using closest weighted 10  : 
+# using closest weighted 20  : 
+
 TOP = 12384075106.1875
 
 import pandas as pd
@@ -24,6 +31,8 @@ NORTH_POLE = (90,0)
 LAT_CUTOFF = 80
 LON_RANGE = 2.0
 LAT_RANGE = 3.0
+RAW_MAX_DIST = 2
+WEIGHT_FACTOR = 10 # higher = less weight!
 
 print ('Read gifts file...')
 gifts = pd.read_csv('~/DataScientist/santa/gifts.csv')
@@ -95,7 +104,7 @@ def closeGiftsRaw(pos, giftsLeft):
     for g in giftsLeft:
         la1 = giftLat[g]
         lo1 = giftLon[g]
-        if ((abs(lat-la1)<2) and (abs(lon-lo1)<2)):
+        if ((abs(lat-la1) < RAW_MAX_DIST) and (abs(lon-lo1) < RAW_MAX_DIST)):
             res.append(g)
     #print ('raw number: {}'.format(len(res)))
     return res
@@ -111,6 +120,20 @@ def closestGift (pos, giftsLeft):
             closest = g
             minDist = d 
     return closest
+
+def closestGiftWeighted (pos, giftsLeft, pathLen):
+    # return closest gift weighted as id
+    closest = 0
+    minDist = 9999999.9
+    if pathLen == 0:
+        pathLen = 1
+    for g in giftsLeft:
+        d = haversine( pos, (giftLat[g], giftLon[g]) ) / ((giftWeight[g] / WEIGHT_FACTOR) / pathLen)
+        if d < minDist:
+            closest = g
+            minDist = d 
+    return closest
+
 
 
 def goingSouth (pos, giftsLeft):
@@ -150,6 +173,7 @@ giftsLeft = range(1,100001)
 total = 0.0
 round = 0
 pathes = {}
+reverseBetter = 0
 
 while len(giftsLeft) > 0:
     # create path
@@ -168,9 +192,11 @@ while len(giftsLeft) > 0:
 
         giftsRaw = closeGiftsRaw(pos, giftsLeft)
         if len(giftsRaw) > 0:
-            element = closestGift(pos, giftsRaw)
+            #element = closestGift(pos, giftsRaw)
+            element = closestGiftWeighted(pos, giftsRaw, len(path))
         else:
-            element = closestGift(pos, giftsLeft)
+            #element = closestGift(pos, giftsLeft)
+            element = closestGiftWeighted(pos, giftsLeft, len(path))
 
         if giftWeight[ element ] + weight <= MAX_WEIGHT:
             path.append(element)
@@ -182,21 +208,32 @@ while len(giftsLeft) > 0:
         else:
             loading = False
             # full
-    # calc path
-    # add to total
+    # check if reverse path is better
+    wrwForward = wrw(path)
+    wrwBackward = wrw(path[::-1])
+    if wrwBackward < wrwForward:
+        path = path[::-1]
+        print ('\n *** reverse path better! saved {}\n'.format(wrwForward-wrwBackward))
+        reverseBetter += 1
+
     plotPath (round,path)            
     
+    # calc path
+    # add to total
+
     act = wrw(path)
     pathes[round] = path
+    weights = [int (giftWeight[g]) for g in path]
     total += act
     wrwMeanAct = int(act / len(path))
     pathTime = int((time.time() - pathTime0) / .6) / 100
-    est = total / (100000 - len(giftsLeft))
+    est = total / (100000 - len(giftsLeft)) * 100000
     
     print ('round  :      {}'.format(round))
     print ('time   :      {} min'.format(pathTime))
     print ('# gifts:      {}'.format(len(path)))
     print ('path:         {}'.format(path))
+    print ('weights:      {}'.format(weights))
     print ('weight:       {}'.format(int(weight)))
     print ('giftsLeft:    {}'.format(len(giftsLeft)))
     print ('actMeanWRW:   {}'.format(wrwMeanAct))
@@ -206,6 +243,8 @@ while len(giftsLeft) > 0:
 percent = total / TOP
 print ('Result: ' + str(total))
 print ('Result: ' + str(int(percent*100)/100))
+print ('ReverseBetter: {}'.format(reverseBetter))
+
 
 
 
@@ -219,6 +258,5 @@ for p in pathes:
     for e in pathes[p]:
         file.write('{},{}\n'.format(e,p))
 file.close() 
-
 
 
