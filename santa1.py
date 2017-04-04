@@ -15,7 +15,7 @@ Created on Sat Apr  1 11:06:29 2017
 # using closest weighted 5    : 
 # using closest weighted 10   : 
 # using closest weighted 20   :>15.xx 
-# using closest linear weight :
+# using closest linear weight : 13.73
 
 TOP = 12384075106.1875
 
