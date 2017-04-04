@@ -33,7 +33,7 @@ LAT_CUTOFF = 80
 LON_RANGE = 2.0
 LAT_RANGE = 3.0
 RAW_MAX_DIST = 2
-WEIGHT_FACTOR = 10 # higher = less weight!
+WEIGHT_FACTOR = 1 
 
 print ('Read gifts file...')
 gifts = pd.read_csv('~/DataScientist/santa/gifts.csv')
@@ -128,7 +128,8 @@ def closestGiftWeighted (pos, giftsLeft, pathLen):
     minDist = 9999999.9
     pathLen += 10 # do not overrate
     for g in giftsLeft:
-        d = haversine( pos, (giftLat[g], giftLon[g]) ) / ((giftWeight[g] / WEIGHT_FACTOR) / pathLen)
+        #d = haversine( pos, (giftLat[g], giftLon[g]) ) / ((giftWeight[g] / WEIGHT_FACTOR) / pathLen)
+        d = haversine( pos, (giftLat[g], giftLon[g]) ) - (giftWeight[g] + pathLen) * WEIGHT_FACTOR
         if d < minDist:
             closest = g
             minDist = d 
@@ -174,6 +175,7 @@ total = 0.0
 round = 0
 pathes = {}
 reverseBetter = 0
+reverseSavedTotal = 0
 
 while len(giftsLeft) > 0:
     # create path
@@ -215,7 +217,7 @@ while len(giftsLeft) > 0:
         path = path[::-1]
         print ('\n *** reverse path better! saved {}\n'.format(wrwForward-wrwBackward))
         reverseBetter += 1
-
+        reverseSavedTotal += wrwForward-wrwBackward
     plotPath (round,path)            
     
     # calc path
@@ -244,6 +246,7 @@ percent = total / TOP
 print ('Result: ' + str(total))
 print ('Result: ' + str(int(percent*100)/100))
 print ('ReverseBetter: {}'.format(reverseBetter))
+print ('ReverseSTotal: {}'.format(reverseSavedTotal))
 
 
 
@@ -252,6 +255,7 @@ print ('ReverseBetter: {}'.format(reverseBetter))
 # ---------------------
 
 name = '/home/gs/DataScientist/santa/submission.csv'
+#name = '/home/ec2-user/DataScientist/santa/submission.csv'
 file = open (name, 'w')
 file.write ('GiftId,TripId\n')
 for p in pathes:
