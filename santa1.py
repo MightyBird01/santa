@@ -19,7 +19,7 @@ from haversine import haversine
 from random import randint
 
 MAX_WEIGHT = 1000
-EMPTY_WEIGHT = 1000
+EMPTY_WEIGHT = 10
 NORTH_POLE = (90,0)
 LAT_CUTOFF = 80
 LON_RANGE = 2.0
@@ -48,6 +48,8 @@ for row in gifts.iterrows():
 #lyon = (45.7597, 4.8422)
 #paris = (48.8567, 2.3508)
 #print (haversine(lyon, paris))
+#print (haversine(paris, lyon))
+#print (haversine((90,0), (0,0)))
 #print (haversine(lyon, paris, miles=True))
 
 # Lat/Lon (NS, EW, +-90, +-180)
@@ -63,24 +65,44 @@ print ('Min Lon: ' + str(min(gifts['Longitude'])))
 def wrw (tripGifts):
     # weighted reindeer weariness
     wrw = 0.0
-    actualWeight = 10
+    actualWeight = EMPTY_WEIGHT
     actualPos = NORTH_POLE
     # calc starting weight
     for g in tripGifts:
         actualWeight += giftWeight[g]
     #print ('initialWeight: {}'.format(actualWeight))
     # follow path, add wrw, remove weight
+    #print ('initial weight = {}'.format(actualWeight))
     for g in tripGifts:
         newPos = (giftLat[g], giftLon[g])
-        wrw += haversine(actualPos, newPos) * actualWeight
+        #print ('newpos: {}'.format(newPos))
+        dist = haversine(actualPos, newPos)
+        #print ('dist: {}'.format(dist))
+        wrw += dist * actualWeight
         actualWeight -= giftWeight[g]
         actualPos = newPos
     # head home (10kg)
+    #print ('end weight = {}'.format(actualWeight))
     wrw += haversine(actualPos, NORTH_POLE) * EMPTY_WEIGHT
 
     return wrw
     
+def closeGiftsRaw(pos, giftsLeft):
+    # return list of ids of potentially close elements based on grid
+    lat = pos[0]
+    lon = pos[1]
+    res = []
+    for g in giftsLeft:
+        la1 = giftLat[g]
+        lo1 = giftLon[g]
+        if ((abs(lat-la1)<2) and (abs(lon-lo1)<2)):
+            res.append(g)
+    #print ('raw number: {}'.format(len(res)))
+    return res
+    
+    
 def closestGift (pos, giftsLeft):
+    # return closest gift as id
     closest = 0
     minDist = 999999.9
     for g in giftsLeft:
@@ -138,9 +160,15 @@ while len(giftsLeft) > 0:
     pos = NORTH_POLE
     loading = True
     while loading == True:
-        giftsSouth = goingSouth(pos, giftsLeft)
-        if len(giftsSouth) > 0:
-            element = closestGift(pos, giftsSouth)
+#        giftsSouth = goingSouth(pos, giftsLeft)
+#        if len(giftsSouth) > 0:
+#            element = closestGift(pos, giftsSouth)
+#        else:
+#            element = closestGift(pos, giftsLeft)
+
+        giftsRaw = closeGiftsRaw(pos, giftsLeft)
+        if len(giftsRaw) > 0:
+            element = closestGift(pos, giftsRaw)
         else:
             element = closestGift(pos, giftsLeft)
 
@@ -163,7 +191,7 @@ while len(giftsLeft) > 0:
     total += act
     wrwMeanAct = int(act / len(path))
     pathTime = int((time.time() - pathTime0) / .6) / 100
-    est = int(total / (100000 - len(giftsLeft)) * 100000 / 1000000000)
+    est = total / (100000 - len(giftsLeft))
     
     print ('round  :      {}'.format(round))
     print ('time   :      {} min'.format(pathTime))
@@ -172,7 +200,7 @@ while len(giftsLeft) > 0:
     print ('weight:       {}'.format(int(weight)))
     print ('giftsLeft:    {}'.format(len(giftsLeft)))
     print ('actMeanWRW:   {}'.format(wrwMeanAct))
-    print ('totalWRW:     {} est in Mrd {}'.format(long(total), est))
+    print ('totalWRW:     {} - estimated {}'.format(long(total), long(est)))
     print ('\n')
 
 percent = total / TOP
@@ -191,4 +219,6 @@ for p in pathes:
     for e in pathes[p]:
         file.write('{},{}\n'.format(e,p))
 file.close() 
+
+
 
