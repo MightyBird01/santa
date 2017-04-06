@@ -1,6 +1,7 @@
 
 
-fileName = '/home/gs/DataScientist/santa/submission-1.csv'
+fileName = '/home/gs/DataScientist/santa/submission-4.csv'
+stopFileName = '/home/gs/DataScientist/santa/stop.txt'
 
 import pandas as pd
 from haversine import haversine
@@ -10,7 +11,16 @@ from random import randint
 MAX_WEIGHT = 1000
 EMPTY_WEIGHT = 10
 NORTH_POLE = (90,0)
+CLUSTER_OFFSET = 4 # between 0 and 9, valid: 4 
 
+def stopSignal():
+    res = False
+    with open(stopFileName, 'r') as f:
+        lines = f.readlines()
+        l = lines[0]
+        if 'stop' in l:
+            res = True
+    return res
 
 def perm (path, lenPerm):
     positions = range(0,len(path)-lenPerm+1)
@@ -126,8 +136,8 @@ def clusterTrips():
     for p in pathes:
         path = pathes[p]
         el = path[0]
-        lon = giftLon[el] + 180
-        lon = int(lon/10)
+        lon = giftLon[el] + 180 + CLUSTER_OFFSET
+        lon = int(lon/10) % 36
         if lon in tripCluster:
             tripCluster[lon].append(p)
         else:
@@ -246,15 +256,23 @@ initial = totalWRW()
 print ('Initial wrw: {}'.format(initial))
 
 tripCluster = clusterTrips()
+for c in tripCluster:
+    if len(tripCluster[c]) < 2:
+        print ('*** INVALID CLUSTERING!!! ***')
 
 optimizeSwap(5)
 
 
 wrwStart = totalWRW()
 tot = 0 
-for i in range(0,1000):
-    if i%100 == 0:
+i = 0
+while True:
+    i += 1
+    if i % 100 == 0:
         print('round {}'.format(i))
+        if stopSignal():
+            print ('STOP signal encountered')
+            break
     s = swap2()
     tot += s
     if s > 0:
@@ -264,17 +282,9 @@ wrwEnd = totalWRW()
 print (wrwStart - wrwEnd)
 
 
-wrwStart = totalWRW()
-imp = swap2()
-wrwEnd = totalWRW()
-print (wrwStart)
-print (imp)
-print (wrwEnd)
-print (wrwStart - wrwEnd)
 
 
 
-# writeFile(fileName)
+writeFile(fileName)
 
-pathes[1242]
 
